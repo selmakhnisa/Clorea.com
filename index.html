@@ -1,0 +1,1780 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clorea</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --color-primary: #465840;
+            --color-secondary: #FDFBEF;
+            --color-accent: #496B3E;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--color-secondary);
+            color: var(--color-primary);
+        }
+
+        .text-primary {
+            color: var(--color-primary);
+        }
+
+        .bg-accent {
+            background-color: var(--color-accent);
+        }
+
+        .btn {
+            background-color: var(--color-accent);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            font-weight: 600;
+        }
+
+        .icon-btn {
+            background-color: var(--color-accent);
+            color: white;
+            border-radius: 9999px;
+            padding: 0.5rem;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: var(--color-secondary);
+            padding: 2rem;
+            border-radius: 0.75rem;
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .menu-modal-content {
+            position: absolute;
+            top: 0;
+            right: 0;
+            height: 100%;
+            max-width: 300px;
+            border-radius: 0;
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+            background-color: var(--color-secondary);
+        }
+
+        .menu-modal-content.show {
+            transform: translateX(0);
+        }
+
+        .menu-modal-content .close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+        }
+
+        .product-card {
+            border-radius: 1rem;
+            background-color: white;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+        }
+
+        .product-image-container {
+            position: relative;
+            padding-top: 100%;
+            /* 1:1 Aspect Ratio */
+        }
+
+        .product-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        #snackbar {
+            visibility: hidden;
+            min-width: 250px;
+            margin-left: -125px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 2px;
+            padding: 16px;
+            position: fixed;
+            z-index: 1001;
+            left: 50%;
+            bottom: 30px;
+            font-size: 14px;
+            border-radius: 9999px;
+            opacity: 0;
+            transition: opacity 0.5s, visibility 0s 0.5s;
+        }
+
+        #snackbar.show {
+            visibility: visible;
+            opacity: 1;
+            transition: opacity 0.5s, visibility 0s;
+        }
+
+        /* Style for cart item count */
+        .cart-icon-container {
+            position: relative;
+        }
+
+        .cart-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #ef4444;
+            /* Tailwind's red-500 */
+            color: white;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            height: 16px;
+            width: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            display: none;
+            /* Hide by default */
+        }
+
+        .item-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #6b7280;
+            padding: 2rem;
+        }
+    </style>
+</head>
+
+<body class="bg-secondary">
+
+    <!-- Header & Navigation -->
+    <header class="bg-secondary p-4 fixed top-0 w-full z-50 shadow-xl md:px-8">
+        <div class="container mx-auto flex justify-between items-center">
+            <!-- Logo -->
+            <a href="#" class="text-xl font-bold flex items-center">
+                <img src="logo c.png" class="w-24 mr-7">
+
+            </a>
+
+            <!-- Desktop Navigation -->
+            <nav class="hidden md:flex items-center space-x-6">
+                <a href="#home" class="text-primary font-medium hover:text-accent" onclick="showHome()">Beranda</a>
+                <a href="#" class="text-primary font-medium hover:text-accent"
+                    onclick="showCategoriesPage()">Kategori</a>
+                <a href="#products" class="text-primary font-medium hover:text-accent"
+                    onclick="showAllProductsPage()">Produk</a>
+                <a href="#" class="text-primary font-medium hover:text-accent" onclick="showAboutUs()">Tentang Kami</a>
+                <a href="#" class="text-primary font-medium hover:text-accent" onclick="showContact()">Kontak Kami</a>
+                <a href="#" id="desktop-track-order-btn" class="text-primary font-medium hover:text-accent hidden"
+                    onclick="showOrderTrackingPage()">Lacak Pesanan</a>
+                <button id="desktop-auth-btn" class="btn hidden md:block" onclick="showAuthModal('nav')">Masuk /
+                    Daftar</button>
+            </nav>
+
+            <!-- Icons for Mobile & Desktop -->
+            <div class="flex items-center space-x-4">
+                <button id="search-btn" class="text-primary hover:text-accent">
+                    <i class="fas fa-search"></i>
+                </button>
+                <!-- Wishlist Icon in Header -->
+                <button id="header-wishlist-icon" class="text-primary hover:text-accent">
+                    <i class="far fa-heart"></i>
+                </button>
+                <!-- Cart Icon in Header -->
+                <button id="header-cart-icon" class="text-primary hover:text-accent cart-icon-container">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span id="cart-count" class="cart-count">0</span>
+                </button>
+                <!-- Hamburger Menu for Mobile -->
+                <button id="menu-btn" class="text-primary hover:text-accent md:hidden">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Search Modal -->
+    <div id="search-modal" class="modal">
+        <div class="modal-content text-primary">
+            <button class="absolute top-2 right-4 text-gray-500 hover:text-gray-800 text-2xl"
+                onclick="toggleModal('search-modal')">&times;</button>
+            <h2 class="text-xl font-semibold mb-4 text-primary">Cari Produk</h2>
+            <div class="flex items-center border border-gray-300 rounded-full px-4 py-2 focus-within:border-accent">
+                <input type="text" id="search-input" placeholder="Cari produk..."
+                    class="w-full bg-transparent focus:outline-none text-primary placeholder:text-gray-400">
+                <button class="text-accent ml-2" onclick="searchProducts()"><i class="fas fa-search"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Detail Modal -->
+    <div id="product-detail-modal" class="modal">
+        <div class="modal-content text-primary max-w-xl max-h-[90vh] overflow-y-auto">
+            <button class="absolute top-2 right-4 text-gray-500 hover:text-gray-800 text-2xl"
+                onclick="toggleModal('product-detail-modal')">&times;</button>
+            <div class="flex flex-col gap-4">
+                <div class="flex flex-col items-center">
+                    <img id="detail-image" src="" alt="Product Image"
+                        class="w-full h-auto rounded-lg mb-4 object-contain max-h-[400px]">
+                    <div id="image-gallery-thumbnails" class="flex space-x-2 overflow-x-auto">
+                        <!-- Thumbnails will be generated here -->
+                    </div>
+                </div>
+                <div>
+                    <h2 id="detail-name" class="text-xl md:text-2xl font-bold text-primary"></h2>
+                    <p id="detail-price" class="text-xl font-semibold text-accent mt-2"></p>
+                    <div id="detail-description" class="text-sm text-gray-700 mt-4 leading-relaxed"></div>
+                    <!-- Quantity selector -->
+                    <div class="flex items-center space-x-2 mt-4">
+                        <span class="text-primary">Jumlah:</span>
+                        <button id="decrement-quantity"
+                            class="p-2 border rounded-full w-8 h-8 flex items-center justify-center hover:bg-gray-200">-</button>
+                        <input type="number" id="product-quantity" value="1" min="1"
+                            class="w-12 text-center border rounded-md" readonly>
+                        <button id="increment-quantity"
+                            class="p-2 border rounded-full w-8 h-8 flex items-center justify-center hover:bg-gray-200">+</button>
+                    </div>
+                    <button id="detail-add-to-cart-btn" class="btn w-full mt-6">
+                        <i class="fas fa-shopping-cart mr-2"></i> Tambah Keranjang
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add to Cart Quantity Modal -->
+    <div id="add-to-cart-modal" class="modal">
+        <div class="modal-content text-primary max-w-sm">
+            <button class="absolute top-2 right-4 text-gray-500 hover:text-gray-800 text-2xl"
+                onclick="toggleModal('add-to-cart-modal')">&times;</button>
+            <h2 class="text-xl font-semibold mb-4 text-primary text-center">Tambahkan ke Keranjang</h2>
+            <div id="product-options" class="flex flex-col space-y-2 mb-4 hidden">
+                <label class="flex items-center space-x-2">
+                    <input type="radio" name="loofah-size" value="7000" data-name="Sponge Alami (Loofah) - Regular"
+                        class="form-radio text-accent">
+                    <span class="text-sm font-medium">Regular (Rp7.000)</span>
+                </label>
+                <label class="flex items-center space-x-2">
+                    <input type="radio" name="loofah-size" value="22000" data-name="Sponge Alami (Loofah) - Jumbo"
+                        class="form-radio text-accent">
+                    <span class="text-sm font-medium">Jumbo (Rp22.000)</span>
+                </label>
+            </div>
+            <div class="flex items-center space-x-2 mt-4 justify-center">
+                <button id="modal-decrement-quantity"
+                    class="p-2 border rounded-full w-8 h-8 flex items-center justify-center hover:bg-gray-200">-</button>
+                <input type="number" id="modal-product-quantity" value="1" min="1"
+                    class="w-12 text-center border rounded-md" readonly>
+                <button id="modal-increment-quantity"
+                    class="p-2 border rounded-full w-8 h-8 flex items-center justify-center hover:bg-gray-200">+</button>
+            </div>
+            <button id="modal-confirm-add-to-cart-btn" class="btn w-full mt-6">
+                <i class="fas fa-shopping-cart mr-2"></i> Tambahkan
+            </button>
+        </div>
+    </div>
+
+    <!-- Wishlist Modal -->
+    <div id="wishlist-modal" class="modal">
+        <div class="modal-content text-primary">
+            <button class="absolute top-2 right-4 text-gray-500 hover:text-gray-800 text-2xl"
+                onclick="toggleModal('wishlist-modal')">&times;</button>
+            <h2 class="text-xl font-semibold mb-4 text-primary">Wishlist Anda</h2>
+            <div id="wishlist-items" class="item-list space-y-4">
+                <!-- Wishlist items will be rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart Modal -->
+    <div id="cart-modal" class="modal">
+        <div class="modal-content text-primary">
+            <button class="absolute top-2 right-4 text-gray-500 hover:text-gray-800 text-2xl"
+                onclick="toggleModal('cart-modal')">&times;</button>
+            <h2 class="text-xl font-semibold mb-4 text-primary">Keranjang Belanja</h2>
+            <div id="cart-items" class="item-list space-y-4">
+                <!-- Cart items will be rendered here -->
+            </div>
+            <div id="cart-summary" class="mt-4 pt-4 border-t border-gray-300">
+                <div class="flex justify-between font-semibold">
+                    <span>Total:</span>
+                    <span id="cart-total">Rp0</span>
+                </div>
+                <button id="checkout-btn" class="btn w-full mt-4">Checkout</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Menu Modal -->
+    <div id="menu-modal" class="modal justify-end bg-transparent">
+        <div class="menu-modal-content relative p-6 w-full h-full text-primary">
+            <button class="absolute top-4 right-4 text-primary text-2xl"
+                onclick="toggleModal('menu-modal')">&times;</button>
+            <div class="flex flex-col space-y-4">
+                <div class="flex items-center">
+                    <img src="images/logo c.png" alt="Clorea Logo" class="h-10 w-auto mr-2">
+                    <span class="text-lg font-bold">Clorea</span>
+                </div>
+                <hr class="border-gray-300">
+                <a href="#home" class="text-primary font-medium hover:text-accent"
+                    onclick="showHome(); toggleModal('menu-modal');">Beranda</a>
+                <a href="#" class="text-primary font-medium hover:text-accent"
+                    onclick="showCategoriesPage(); toggleModal('menu-modal');">Kategori</a>
+                <a href="#products" class="text-primary font-medium hover:text-accent"
+                    onclick="showAllProductsPage(); toggleModal('menu-modal');">Produk</a>
+                <a href="#" class="text-primary font-medium hover:text-accent"
+                    onclick="showAboutUs(); toggleModal('menu-modal');">Tentang Kami</a>
+                <a href="#" class="text-primary font-medium hover:text-accent"
+                    onclick="showContact(); toggleModal('menu-modal');">Kontak Kami</a>
+                <hr class="border-gray-300">
+                <button id="mobile-track-order-btn" class="text-primary font-medium hover:text-accent text-left hidden"
+                    onclick="showOrderTrackingPage(); toggleModal('menu-modal');">Lacak Pesanan</button>
+                <button id="mobile-auth-btn" class="btn w-full mt-4" onclick="showAuthModal('nav')">Masuk /
+                    Daftar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="modal">
+        <div class="modal-content text-primary">
+            <button class="absolute top-2 right-4 text-gray-500 hover:text-gray-800 text-2xl"
+                onclick="toggleModal('auth-modal')">&times;</button>
+            <h2 class="text-xl font-semibold mb-4 text-primary text-center">Masuk / Daftar</h2>
+            <form id="auth-form" class="space-y-4">
+                <div>
+                    <label for="email" class="block text-primary font-medium mb-1">Email</label>
+                    <input type="email" id="email"
+                        class="w-full px-4 py-2 border rounded-full focus:outline-none focus:border-accent text-primary"
+                        placeholder="Masukkan email Anda">
+                </div>
+                <div>
+                    <label for="password" class="block text-primary font-medium mb-1">Kata Sandi</label>
+                    <input type="password" id="password"
+                        class="w-full px-4 py-2 border rounded-full focus:outline-none focus:border-accent text-primary"
+                        placeholder="Masukkan kata sandi">
+                </div>
+                <button type="submit" id="auth-submit-btn" class="btn w-full">Masuk</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Checkout Modal for Guest/Login -->
+    <div id="checkout-modal-guest-login" class="modal">
+        <div class="modal-content text-primary">
+            <button class="absolute top-2 right-4 text-gray-500 hover:text-gray-800 text-2xl"
+                onclick="toggleModal('checkout-modal-guest-login')">&times;</button>
+            <h2 class="text-xl font-semibold mb-4 text-primary text-center">Langkah Selanjutnya</h2>
+            <p class="text-center mb-6 text-gray-700">Silahkan masuk atau daftar untuk melanjutkan pembayaran.</p>
+            <div class="space-y-4">
+                <button id="go-to-auth-btn" class="btn w-full">Masuk / Daftar</button>
+                <button id="go-to-guest-checkout-btn"
+                    class="w-full text-primary border border-primary py-2 px-4 rounded-full font-medium hover:bg-primary hover:text-secondary transition-colors duration-200">Checkout
+                    sebagai Tamu</button>
+            </div>
+        </div>
+    </div>
+
+    <main id="main-content" class="mt-20">
+        <!-- Hero Section -->
+        <section id="hero" class="relative p-4 md:p-8">
+            <div class="relative w-full h-48 md:h-72 rounded-xl overflow-hidden shadow-lg bg-accent">
+                <div class="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center p-4 text-center">
+                    <div class="text-white">
+                        <h1 class="text-2xl md:text-4xl font-bold">Produk Ramah Lingkungan</h1>
+                        <p class="mt-2 md:text-lg">Untuk masa depan yang lebih baik</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Product Categories on Home Page -->
+        <section id="categories" class="p-4 md:p-8">
+            <div class="container mx-auto">
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 gap-4 justify-items-center">
+                    <div class="text-center cursor-pointer" onclick="filterProducts('Home & Living')">
+                        <div class="icon-btn w-16 h-16 md:w-20 md:h-20 flex items-center justify-center mx-auto mb-2">
+                            <i class="fas fa-home text-2xl md:text-3xl"></i>
+                        </div>
+                        <p class="text-primary text-sm md:text-base font-medium">Home & Living</p>
+                    </div>
+                    <div class="text-center cursor-pointer" onclick="filterProducts('Health & Beauty')">
+                        <div class="icon-btn w-16 h-16 md:w-20 md:h-20 flex items-center justify-center mx-auto mb-2">
+                            <i class="fas fa-heartbeat text-2xl md:text-3xl"></i>
+                        </div>
+                        <p class="text-primary text-sm md:text-base font-medium">Health & Beauty</p>
+                    </div>
+                    <div class="text-center cursor-pointer" onclick="filterProducts('Semua')">
+                        <div class="icon-btn w-16 h-16 md:w-20 md:h-20 flex items-center justify-center mx-auto mb-2">
+                            <i class="fas fa-box text-2xl md:text-3xl"></i>
+                        </div>
+                        <p class="text-primary text-sm md:text-base font-medium">Semua</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- All Products -->
+        <section id="products" class="p-4 md:p-8">
+            <div class="container mx-auto">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 id="products-heading" class="text-xl md:text-2xl font-bold text-primary">Semua Produk</h2>
+                    <a href="#" class="text-accent font-medium text-sm md:text-base hover:underline"
+                        onclick="showAllProductsPage()">Lihat Semua</a>
+                </div>
+                <div id="product-list" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    <!-- Product Card Loop -->
+                    <div class="product-card" data-product-id="1" data-product-name="Sponge Alami (Loofah)"
+                        data-product-price="7000" data-product-price-range="Rp7.000 - Rp22.000"
+                        data-product-image="Loofah sponges.PNG"
+                        data-product-description="Sponge mandi dan sponge cuci piring konvensional biasanya terbuat dari bahan sintetis yang sulit terurai dan tidak bisa didaur ulang.<br><br>Setelah dibuang, mereka jadi bagian dari sampah mikroplastik yang mencemari lingkungan 🌍<br><br>Saatnya beralih ke pilihan alami: Loofah!<br>🌿 Terbuat dari tanaman gambas/oyong yang dikeringkan<br>🌿 100% dapat dikompos<br>🌿 Ditanam & dipanen secara lokal di Indonesia<br><br>🧽 Ukuran Regular: ±15 cm per buah (bisa dipotong menjadi 2pcs)<br>🧽 Ukuran Jumbo: ±27 cm per buah (bisa dipotong menjadi 2-4pcs)<br><br>Cara Pakai:<br>1. Basahkan loofah hingga mengembang dan terasa lembut<br>2. Gunakan sesuai kebutuhan – untuk mandi, mencuci, atau exfoliating<br>3. Setelah digunakan, bilas dan keringkan di tempat yang memiliki sirkulasi udara baik<br><br>♻ Bila loofah sudah usang:<br>Cuci bersih, lalu potong kecil-kecil & masukkan ke kompos. Loofah akan terurai secara alami"
+                        data-product-category="Home & Living">
+                        <div class="product-image-container">
+                            <img src="Loofah sponges.PNG"
+                                alt="Sponge Alami (Loofah)" class="product-image">
+                            <button
+                                class="wishlist-btn absolute top-2 right-2 text-primary p-2 rounded-full bg-white bg-opacity-70 hover:bg-opacity-100">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        </div>
+                        <div class="p-3">
+                            <p class="product-name text-sm font-medium text-primary">Sponge Alami (Loofah)</p>
+                            <p class="text-sm font-semibold mt-1 text-primary">Rp7.000 - Rp22.000</p>
+                            <p class="text-xs text-gray-500 mt-1">
+                                <i class="fas fa-star text-yellow-400"></i> 4.8 | 1.2rb+ Terjual
+                            </p>
+                            <button
+                                class="add-to-cart-btn w-full mt-2 text-primary border border-primary py-2 px-4 rounded-full text-sm font-medium hover:bg-primary hover:text-secondary transition-colors duration-200"
+                                data-product-id="1">
+                                Tambah Keranjang
+                            </button>
+                        </div>
+                    </div>
+                    <div class="product-card" data-product-id="2" data-product-name="Sikat toilet kayu"
+                        data-product-price="70000"
+                        data-product-image="sikat toilet.JPEG.jpg"
+                        data-product-description="Terbuat dari kayu jati dan sabut kelapa alami, selain kuat dan efektif membersihkan, sikat toilet ini juga ramah lingkungan karena 100% terbuat dari bahan alami yang dapat dikompos setelah usang.<br><br>✔ Dapat dikompos – terbuat dari bahan alami yang dapat terurai<br>✔ Bebas mikroplastik – tidak seperti sikat plastik, serat alami sabut kelapa tidak mencemari lingkungan<br>✔ Serbaguna – cocok untuk teflon, panci, talenan, wastafel, hingga peralatan rumah lainnya<br>✔ Buatan pengrajin lokal - mendukung pengrajin Indonesia<br><br>Panjang: 34.5cm<br>Panjang area sikat: 8cm<br>Diameter: 7cm<br><br>Cara merawat sikat kayu: setelah digunakan, keringkan sikatnya dan simpan di tempat kering<br>Lebih baik dijemur setelah dipakai untuk menghindari jamur."
+                        data-product-category="Home & Living">
+                        <div class="product-image-container">
+                            <img src="sikat toilet.JPEG.jpg"
+                                alt="Sikat toilet kayu" class="product-image">
+                            <button
+                                class="wishlist-btn absolute top-2 right-2 text-primary p-2 rounded-full bg-white bg-opacity-70 hover:bg-opacity-100">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        </div>
+                        <div class="p-3">
+                            <p class="product-name text-sm font-medium text-primary">Sikat toilet kayu</p>
+                            <p class="text-sm font-semibold mt-1 text-primary">Rp70.000</p>
+                            <p class="text-xs text-gray-500 mt-1">
+                                <i class="fas fa-star text-yellow-400"></i> 4.9 | 2.5rb+ Terjual
+                            </p>
+                            <button
+                                class="add-to-cart-btn w-full mt-2 text-primary border border-primary py-2 px-4 rounded-full text-sm font-medium hover:bg-primary hover:text-secondary transition-colors duration-200"
+                                data-product-id="2">
+                                Tambah Keranjang
+                            </button>
+                        </div>
+                    </div>
+                    <div class="product-card" data-product-id="3" data-product-name="Sikat Kayu Kecil"
+                        data-product-price="50000"
+                        data-product-image="sikat.JPEG.jpg"
+                        data-product-images="sikat.JPEG.jpg"
+                        data-product-description="Sikat kayu kecil ini dapat digunakan untuk beragam keperluan dari mencuci buah, menyikat peralatan dapur, menyikat sepatu, dll. Sikat ini terbuat dari limbah kayu jati & sabut kelapa. Jadi setelah usang, dapat dikompos dan terurai secara sempurna<br><br>Buatan pengrajin lokal<br>Panjang: 11cm<br>Diameter: 3.3cm<br><br>Cara merawat sikat kayu: setelah digunakan, keringkan sikatnya dan simpan di tempat kering. Lebih baik dijemur setelah dipakai untuk menghindari jamur."
+                        data-product-category="Home & Living">
+                        <div class="product-image-container">
+                            <img src="sikat.JPEG.jpg"
+                                alt="Sikat Kayu Kecil" class="product-image">
+                            <button
+                                class="wishlist-btn absolute top-2 right-2 text-primary p-2 rounded-full bg-white bg-opacity-70 hover:bg-opacity-100">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        </div>
+                        <div class="p-3">
+                            <p class="product-name text-sm font-medium text-primary">Sikat Kayu Kecil</p>
+                            <p class="text-sm font-semibold mt-1 text-primary">Rp50.000</p>
+                            <p class="text-xs text-gray-500 mt-1">
+                                <i class="fas fa-star text-yellow-400"></i> 4.7 | 800+ Terjual
+                            </p>
+                            <button
+                                class="add-to-cart-btn w-full mt-2 text-primary border border-primary py-2 px-4 rounded-full text-sm font-medium hover:bg-primary hover:text-secondary transition-colors duration-200"
+                                data-product-id="3">
+                                Tambah Keranjang
+                            </button>
+                        </div>
+                    </div>
+                    <div class="product-card" data-product-id="4" data-product-name="Buah Lerak (deterjen alami)"
+                        data-product-price="22000"
+                        data-product-image="detergent lerak.JPEG.jpg"
+                        data-product-description="Tanaman lerak (Sapindus rarak DC) merupakan tanaman industri yang tumbuh dengan baik pada ketinggian 450 sampai 1.500 m dpl. Lerak biasa tumbuh liar di hutan. Lerak banyak mengandung saponin (28%). Dengan memiliki kandungan saponin (zat penghasil busa).<br><br>Lerak sudah dipakai sejak zaman dahulu khususnya untuk mencuci baju dan batik. bahannya alami sehingga aman untuk kulit tangan dan ramah lingkungan<br><br>kegunaan:<br>1. mencuci baju<br>2. mencuci batik<br>3. sabun cuci piring<br>4. sabun pel lantai<br>5. mencuci clodi menspad<br><br>Aroma: buah lerak asli original<br><br>Ingredients: air, lerak, garam, sereh<br><br>Terbuat dari ekstrak buah lerak, bahannya cair. Busanya tidak terlalu banyak tetapi efektif untuk digunakan mencuci. Tidak mengandung bahan kimia berbahaya, asli cairan lerak saja, tanpa tambahan bahan kimia lainnya. kemasan botol 1 liter. Penyimpanan 1 bulan di suhu ruangan dan dalam kulkas bisa tahan hingga 3 bulan lebih."
+                        data-product-category="Home & Living">
+                        <div class="product-image-container">
+                            <img src="detergent lerak.JPEG.jpg"
+                                alt="Buah Lerak (deterjen alami)" class="product-image">
+                            <button
+                                class="wishlist-btn absolute top-2 right-2 text-primary p-2 rounded-full bg-white bg-opacity-70 hover:bg-opacity-100">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        </div>
+                        <div class="p-3">
+                            <p class="product-name text-sm font-medium text-primary">Buah Lerak (deterjen alami)</p>
+                            <p class="text-sm font-semibold mt-1 text-primary">Rp22.000</p>
+                            <p class="text-xs text-gray-500 mt-1">
+                                <i class="fas fa-star text-yellow-400"></i> 5.0 | 3.1rb+ Terjual
+                            </p>
+                            <button
+                                class="add-to-cart-btn w-full mt-2 text-primary border border-primary py-2 px-4 rounded-full text-sm font-medium hover:bg-primary hover:text-secondary transition-colors duration-200"
+                                data-product-id="4">
+                                Tambah Keranjang
+                            </button>
+                        </div>
+                    </div>
+                    <div class="product-card hidden lg:block" data-product-id="5"
+                        data-product-name="Set Sapu Kayu Kecil" data-product-price="115000"
+                        data-product-image="sapu.PNG"
+                        data-product-description="Sapu kecil ini praktis banget disimpan di rumah buat nyapu kotoran, makanan yang berjatuhan, dll. Terbuat dari limbah kayu jati dan sabut kelapa, setelah usang, sapu ini 100% dapat dikompos!<br><br>Terbuat dari campuran limbah kayu jadi oleh pengrajin lokal Indonesia<br>Lebar: 20cm<br>Tinggi: 16.5cm<br><br>Cara merawat sikat kayu: setelah digunakan, keringkan sikatnya dan simpan di tempat kering. Lebih baik dijemur setelah dipakai untuk menghindari jamur."
+                        data-product-category="Home & Living">
+                        <div class="product-image-container">
+                            <img src="sapu.PNG"
+                                alt="Set Sapu Kayu Kecil" class="product-image">
+                            <button
+                                class="wishlist-btn absolute top-2 right-2 text-primary p-2 rounded-full bg-white bg-opacity-70 hover:bg-opacity-100">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        </div>
+                        <div class="p-3">
+                            <p class="product-name text-sm font-medium text-primary">Set Sapu Kayu Kecil</p>
+                            <p class="text-sm font-semibold mt-1 text-primary">Rp115.000</p>
+                            <p class="text-xs text-gray-500 mt-1">
+                                <i class="fas fa-star text-yellow-400"></i> 4.6 | 950+ Terjual
+                            </p>
+                            <button
+                                class="add-to-cart-btn w-full mt-2 text-primary border border-primary py-2 px-4 rounded-full text-sm font-medium hover:bg-primary hover:text-secondary transition-colors duration-200"
+                                data-product-id="5">
+                                Tambah Keranjang
+                            </button>
+                        </div>
+                    </div>
+                    <div class="product-card" data-product-id="6" data-product-name="Sikat Botol Kayu"
+                        data-product-price="58000"
+                        data-product-image="sikat botol.JPEG.jpg"
+                        data-product-description="Seperti namanya, sikat kayu ini fungsinya untuk membersihkan bagian dalam botol.<br>Terbuat dari limbah kayu jati dan sabut kelapa, sikat ini dapat dikompos dan terurai setelah usang<br><br>Buatan pengrajin lokal<br>Panjang: 29cm<br>Panjang bagian sikat: 15cm<br><br>Cara merawat sikat kayu: setelah digunakan, keringkan sikatnya dan simpan di tempat kering.<br>Lebih baik dijemur setelah dipakai untuk menghindari jamur"
+                        data-product-category="Home & Living">
+                        <div class="product-image-container">
+                            <img src="sikat botol.JPEG.jpg"
+                                alt="Sikat Botol Kayu" class="product-image">
+                            <button
+                                class="wishlist-btn absolute top-2 right-2 text-primary p-2 rounded-full bg-white bg-opacity-70 hover:bg-opacity-100">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        </div>
+                        <div class="p-3">
+                            <p class="product-name text-sm font-medium text-primary">Sikat Botol Kayu</p>
+                            <p class="text-sm font-semibold mt-1 text-primary">Rp58.000</p>
+                            <p class="text-xs text-gray-500 mt-1">
+                                <i class="fas fa-star text-yellow-400"></i> 4.8 | 1.1rb+ Terjual
+                            </p>
+                            <button
+                                class="add-to-cart-btn w-full mt-2 text-primary border border-primary py-2 px-4 rounded-full text-sm font-medium hover:bg-primary hover:text-secondary transition-colors duration-200"
+                                data-product-id="6">
+                                Tambah Keranjang
+                            </button>
+                        </div>
+                    </div>
+                    <div class="product-card" data-product-id="7" data-product-name="Sabun Batang (kelapa)"
+                        data-product-price="28000"
+                        data-product-image="coconut Soap (1).PNG"
+                        data-product-description="Sabun batang yang terbuat dari minyak kelapa dan memiliki busa berlimpah dengan daya bersih yang kuat.<br><br>Sabun batang ini dapat digunakan untuk membersihkan menspad, pakaian dalam, kapas kain, menyuci piring, dan sebagai pembersih serbaguna lainnya<br><br>Berat: 100gr<br>Komposisi: minyak kelapa, air, sodium hydroxide"
+                        data-product-category="Health & Beauty">
+                        <div class="product-image-container">
+                            <img src="coconut Soap (1).PNG"
+                                alt="Sabun Batang (kelapa)" class="product-image">
+                            <button
+                                class="wishlist-btn absolute top-2 right-2 text-primary p-2 rounded-full bg-white bg-opacity-70 hover:bg-opacity-100">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        </div>
+                        <div class="p-3">
+                            <p class="product-name text-sm font-medium text-primary">Sabun Batang (kelapa)</p>
+                            <p class="text-sm font-semibold mt-1 text-primary">Rp28.000</p>
+                            <p class="text-xs text-gray-500 mt-1">
+                                <i class="fas fa-star text-yellow-400"></i> 4.7 | 700+ Terjual
+                            </p>
+                            <button
+                                class="add-to-cart-btn w-full mt-2 text-primary border border-primary py-2 px-4 rounded-full text-sm font-medium hover:bg-primary hover:text-secondary transition-colors duration-200"
+                                data-product-id="7">
+                                Tambah Keranjang
+                            </button>
+                        </div>
+                    </div>
+                    <div class="product-card" data-product-id="8" data-product-name="Sikat Sedotan Sabut Kelapa"
+                        data-product-price="12000"
+                        data-product-image="bamboo straw.PNG"
+                        data-product-description="Digunakan untuk menyikat bagian dalam sedotan<br>Terbuat dari sabut kelapa, setelah usang, sikatnya dapat dikompos<br><br>Panjang 22cm<br>Material: sabut kelapa, kawat stainless."
+                        data-product-category="Home & Living">
+                        <div class="product-image-container">
+                            <img src="bamboo straw.PNG"
+                                alt="Sikat Sedotan Sabut Kelapa" class="product-image">
+                            <button
+                                class="wishlist-btn absolute top-2 right-2 text-primary p-2 rounded-full bg-white bg-opacity-70 hover:bg-opacity-100">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        </div>
+                        <div class="p-3">
+                            <p class="product-name text-sm font-medium text-primary">Sikat Sedotan Sabut Kelapa</p>
+                            <p class="text-sm font-semibold mt-1 text-primary">Rp12.000</p>
+                            <p class="text-xs text-gray-500 mt-1">
+                                <i class="fas fa-star text-yellow-400"></i> 4.9 | 1.5rb+ Terjual
+                            </p>
+                            <button
+                                class="add-to-cart-btn w-full mt-2 text-primary border border-primary py-2 px-4 rounded-full text-sm font-medium hover:bg-primary hover:text-secondary transition-colors duration-200"
+                                data-product-id="8">
+                                Tambah Keranjang
+                            </button>
+                        </div>
+                    </div>
+                    <div class="product-card" data-product-id="9" data-product-name="Sponge Sabut Kelapa"
+                        data-product-price="5000"
+                        data-product-image="sponge sabut kelapa.PNG"
+                        data-product-description="Sponge yang terbuat dari sabut kelapa ini cocok banget buat gosok peralatan dapurmu yang kotor. Teksturnya yang kasar ampuh menghempaskan noda membandel.<br><br>Terbuat dari sabut kelapa dan lem karet<br>Dapat dikompos setelah sudah usang<br>Ukuran 12 x 8 cm<br>Buatan pengrajin lokal."
+                        data-product-category="Home & Living">
+                        <div class="product-image-container">
+                            <img src="sponge sabut kelapa.PNG"
+                                alt="Sponge Sabut Kelapa" class="product-image">
+                            <button
+                                class="wishlist-btn absolute top-2 right-2 text-primary p-2 rounded-full bg-white bg-opacity-70 hover:bg-opacity-100">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        </div>
+                        <div class="p-3">
+                            <p class="product-name text-sm font-medium text-primary">Sponge Sabut Kelapa</p>
+                            <p class="text-sm font-semibold mt-1 text-primary">Rp5.000</p>
+                            <p class="text-xs text-gray-500 mt-1">
+                                <i class="fas fa-star text-yellow-400"></i> 4.5 | 900+ Terjual
+                            </p>
+                            <button
+                                class="add-to-cart-btn w-full mt-2 text-primary border border-primary py-2 px-4 rounded-full text-sm font-medium hover:bg-primary hover:text-secondary transition-colors duration-200"
+                                data-product-id="9">
+                                Tambah Keranjang
+                            </button>
+                        </div>
+                    </div>
+                    <div class="product-card" data-product-id="10" data-product-name="Menstrual Pad (kain)"
+                        data-product-price="36000"
+                        data-product-image="pembalut.PNG"
+                        data-product-description="Tahukah kamu? Seorang wanita membuang sekitar 200–300 pembalut sekali pakai setiap tahun<br><br>Saatnya beralih ke menspad—pembalut kain yang bisa dicuci, digunakan ulang, dan bertahan hingga bertahun-tahun!<br>Lebih aman untuk tubuhmu, lebih baik untuk bumi<br><br>Kelebihan Basic Menspad:<br>✔ Hemat & Ramah Lingkungan – Bisa dipakai ulang hingga bertahun-tahun, gak lagi nyampah pembalut sekali pakai<br>✔ Daya Serap Tinggi & Tahan Bocor – Dapat menampung darah haid dengan baik, dilengkapi lapisan waterproof yang menjaga darah agar tidak bocor<br>✔ Mudah Dicuci – Terbuat dari bahan pilihan yang mudah dibersihkan<br>✔ Dukung Lokal – 100% buatan tangan pengrajin Indonesia<br><br>Tersedia dalam 3 Ukuran:<br>Minipad (Panjang 19 cm | Daya Tampung ±40ml)<br>Cocok untuk sehari-hari sebagai pantyliner atau saat haid ringan<br>Day (Panjang 27 cm | Daya Tampung ±100ml)<br>Ideal untuk hari ke-3 hingga ke-5 saat aliran darah sedang<br>Night (Panjang 35 cm | Daya Tampung ±125ml)<br>Dirancang untuk hari-hari awal haid atau saat tidur, memberikan perlindungan ekstra<br><br>Cara Cuci & Perawatan:<br>1. Bilas menspad dengan air hingga darah keluar dan air bilasan menjadi jernih.<br>2. Cuci dengan tangan atau mesin cuci menggunakan sabun atau deterjen biasa<br>>> Disarankan menggunakan CocoClean Soap Bar yang ampuh mengangkat noda untuk hasil bersih maksimal<br>3. Jemur hingga benar-benar kering<br><br>Jika Menspad Terasa Kaku?<br>Lakukan stripping: rendam menspad dalam larutan air panas + baking soda selama 30 menit, lalu bilas hingga bersih. Ini akan mengangkat residu deterjen atau sisa kotoran yang menumpuk."
+                        data-product-category="Health & Beauty">
+                        <div class="product-image-container">
+                            <img src="pembalut.PNG"
+                                alt="Menstrual Pad (kain)" class="product-image">
+                            <button
+                                class="wishlist-btn absolute top-2 right-2 text-primary p-2 rounded-full bg-white bg-opacity-70 hover:bg-opacity-100">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        </div>
+                        <div class="p-3">
+                            <p class="product-name text-sm font-medium text-primary">Menstrual Pad (kain)</p>
+                            <p class="text-sm font-semibold mt-1 text-primary">Rp36.000</p>
+                            <p class="text-xs text-gray-500 mt-1">
+                                <i class="fas fa-star text-yellow-400"></i> 4.9 | 2.1rb+ Terjual
+                            </p>
+                            <button
+                                class="add-to-cart-btn w-full mt-2 text-primary border border-primary py-2 px-4 rounded-full text-sm font-medium hover:bg-primary hover:text-secondary transition-colors duration-200"
+                                data-product-id="10">
+                                Tambah Keranjang
+                            </button>
+                        </div>
+                    </div>
+                    <!-- New products added below -->
+                    <div class="product-card" data-product-id="11" data-product-name="Reusable Make Up Remover Pads"
+                        data-product-price="18000"
+                        data-product-image="cotton pads remover.PNG"
+                        data-product-description="Kapas kain ini adalah alternatif yang ramah lingkungan dari kapas sekali pakai<br><br>Yuk beralih ke kapas kain yang;<br>+ Dapat digunakan berulang kali<br>+ Mudah untuk dicuci & tahan lama<br>+ Lembut & aman di kulit<br><br>Dengan dua sisi: sisi tekstur yang ampuh mengangkat noda, dan sisi lembut yang aman bagi kulit sensitif<br>Soft edition: kedua sisi lembut<br>Dilengkapi pita katun untuk menggantung kapas kain agar cepat kering<br><br>Diameter: 7cm<br>Bahan: katun bambu & microfleece<br><br>Gunakan kapas sesuai kebutuhan, cuci & keringkan seperti biasanya<br>Boleh digabungkan dengan cucian baju<br>Disarankan untuk mencuci dengan sabun alami dan gentle seperti CocoClean Soap Bar."
+                        data-product-category="Health & Beauty">
+                        <div class="product-image-container">
+                            <img src="cotton pads remover.PNG"
+                                alt="Reusable Make Up Remover Pads" class="product-image">
+                            <button
+                                class="wishlist-btn absolute top-2 right-2 text-primary p-2 rounded-full bg-white bg-opacity-70 hover:bg-opacity-100">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        </div>
+                        <div class="p-3">
+                            <p class="product-name text-sm font-medium text-primary">Reusable Make Up Remover Pads</p>
+                            <p class="text-sm font-semibold mt-1 text-primary">Rp18.000</p>
+                            <p class="text-xs text-gray-500 mt-1">
+                                <i class="fas fa-star text-yellow-400"></i> 4.9 | 1.8rb+ Terjual
+                            </p>
+                            <button
+                                class="add-to-cart-btn w-full mt-2 text-primary border border-primary py-2 px-4 rounded-full text-sm font-medium hover:bg-primary hover:text-secondary transition-colors duration-200"
+                                data-product-id="11">
+                                Tambah Keranjang
+                            </button>
+                        </div>
+                    </div>
+                    <div class="product-card" data-product-id="12" data-product-name="Cotton buds bamboo"
+                        data-product-price="25000"
+                        data-product-image="BAMBOO COTTON BUDS.PNG"
+                        data-product-description="Kurangi sampah plastik dengan cotton bud ramah lingkungan. Dengan gagang yang terbuat dari bamboo, cotton bud ini aman untuk dibuang setelah pemakaian karena bamboo akan terurai di alam sehingga tidak mencemari lingkungan.<br><br>Paket berisi 100 pcs Bamboo Cotton Bud.<br>The package contains 100 pcs Bamboo Cotton Buds."
+                        data-product-category="Health & Beauty">
+                        <div class="product-image-container">
+                            <img src="BAMBOO COTTON BUDS.PNG"
+                                alt="Cotton buds bamboo" class="product-image">
+                            <button
+                                class="wishlist-btn absolute top-2 right-2 text-primary p-2 rounded-full bg-white bg-opacity-70 hover:bg-opacity-100">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        </div>
+                        <div class="p-3">
+                            <p class="product-name text-sm font-medium text-primary">Cotton buds bamboo</p>
+                            <p class="text-sm font-semibold mt-1 text-primary">Rp25.000</p>
+                            <p class="text-xs text-gray-500 mt-1">
+                                <i class="fas fa-star text-yellow-400"></i> 4.7 | 3.2rb+ Terjual
+                            </p>
+                            <button
+                                class="add-to-cart-btn w-full mt-2 text-primary border border-primary py-2 px-4 rounded-full text-sm font-medium hover:bg-primary hover:text-secondary transition-colors duration-200"
+                                data-product-id="12">
+                                Tambah Keranjang
+                            </button>
+                        </div>
+                    </div>
+                    <div class="product-card" data-product-id="13" data-product-name="Sikat gigi bamboo"
+                        data-product-price="15000"
+                        data-product-image="sikat gigi bambu.PNG"
+                        data-product-description="Sadarkah kalian kalau sikat gigi yang kita pakai sehari-hari itu seluruhnya terbuat dari plastik? Diperkirakan sekitar 3.6 milyar sikat gigi plastik digunakan setiap tahunnya di seluruh dunia dan akan mencemari laut serta daratan kita. Tidak perlu khawatir karena sekarang sudah tersedia sikat gigi dengan gagang terbuat dari bambu sebagai pengganti sikat gigi plastik konvensional.<br><br>Cara Pemakaian :<br>1. Rendam bagian kepala sikat gigi dalam air selama beberapa menit sebelum pemakaian pertama<br>2. Dokter gigi menyarankan untuk sikat gigi setiap harinya 2x sehari<br>3. Bilas sikat gigi sampai bersih setelah pemakaian dan keringkan dengen posisi sikat di atas<br>4. Ganti sikat gigi jika bagian sikat sudah mulai tidak beraturan"
+                        data-product-category="Health & Beauty">
+                        <div class="product-image-container">
+                            <img src="sikat gigi bambu.PNG"
+                                alt="Sikat gigi bamboo" class="product-image">
+                            <button
+                                class="wishlist-btn absolute top-2 right-2 text-primary p-2 rounded-full bg-white bg-opacity-70 hover:bg-opacity-100">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        </div>
+                        <div class="p-3">
+                            <p class="product-name text-sm font-medium text-primary">Sikat gigi bambu</p>
+                            <p class="text-sm font-semibold mt-1 text-primary">Rp15.000</p>
+                            <p class="text-xs text-gray-500 mt-1">
+                                <i class="fas fa-star text-yellow-400"></i> 4.6 | 1.9rb+ Terjual
+                            </p>
+                            <button
+                                class="add-to-cart-btn w-full mt-2 text-primary border border-primary py-2 px-4 rounded-full text-sm font-medium hover:bg-primary hover:text-secondary transition-colors duration-200"
+                                data-product-id="13">
+                                Tambah Keranjang
+                            </button>
+                        </div>
+                    </div>
+                    <div class="product-card" data-product-id="14" data-product-name="Plastic-free scrunchie"
+                        data-product-price="25000"
+                        data-product-image="scrunchie plastic free.PNG"
+                        data-product-description="Terinspirasi dari scrunchies era 80-an namun sepenuhnya dibuat untuk generasi masa kini, Plastic-free scrunchie adalah pilihan rambut yang 100% fair trade, bebas plastik, dan biodegradable—ramah untuk rambut dan lingkungan.<br><br>Bagian luar terbuat dari katun organik selembut sutra yang lembut dan bernapas di rambut, sementara bagian dalam menggunakan karet rambut legendaris Plastic-free scrunchie yang bebas plastik, menjaga rambut tetap nyaman dan terikat sepanjang hari.<br>Scrunch-nya memiliki volume yang pas untuk menambah gaya, dan warnanya yang elegan akan melengkapi berbagai outfit tanpa berlebihan.<br><br>Bahan:<br>– 70% Katun Organik Bersertifikat GOTS<br>– 30% Karet Organik<br>– Pewarna: Diwarnai secara manual menggunakan pewarna alami<br><br>Petunjuk Perawatan:<br>Cuci dengan air dingin bersama warna serupa. Keringkan dengan cara diangin-anginkan (tidak dijemur langsung)."
+                        data-product-category="Health & Beauty">
+                        <div class="product-image-container">
+                            <img src="scrunchie plastic free.PNG"
+                                alt="Plastic-free scrunchie" class="product-image">
+                            <button
+                                class="wishlist-btn absolute top-2 right-2 text-primary p-2 rounded-full bg-white bg-opacity-70 hover:bg-opacity-100">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        </div>
+                        <div class="p-3">
+                            <p class="product-name text-sm font-medium text-primary">Plastic-free scrunchie</p>
+                            <p class="text-sm font-semibold mt-1 text-primary">Rp25.000</p>
+                            <p class="text-xs text-gray-500 mt-1">
+                                <i class="fas fa-star text-yellow-400"></i> 5.0 | 500+ Terjual
+                            </p>
+                            <button
+                                class="add-to-cart-btn w-full mt-2 text-primary border border-primary py-2 px-4 rounded-full text-sm font-medium hover:bg-primary hover:text-secondary transition-colors duration-200"
+                                data-product-id="14">
+                                Tambah Keranjang
+                            </button>
+                        </div>
+                    </div>
+                    <div class="product-card" data-product-id="15" data-product-name="Natural deodorant stick"
+                        data-product-price="65000"
+                        data-product-image="natural deodorant.PNG"
+                        data-product-description="Deodoran ketiak alami dengan bentuk stick/batang aroma lavender dengan wadah tabung kertas.<br><br>Keunggulan produk: degradable packaging, natural ingredients, no aluminum, alcohol, paraben, fragrance, tawas.<br><br>Manfaat: menghilangkan bau badan, aman untuk kesehatan, meminimalisir sampah dan polusi, merawat kulit ketiak."
+                        data-product-category="Health & Beauty">
+                        <div class="product-image-container">
+                            <img src="natural deodorant.PNG"
+                                alt="Natural deodorant stick" class="product-image">
+                            <button
+                                class="wishlist-btn absolute top-2 right-2 text-primary p-2 rounded-full bg-white bg-opacity-70 hover:bg-opacity-100">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        </div>
+                        <div class="p-3">
+                            <p class="product-name text-sm font-medium text-primary">Natural deodorant stick</p>
+                            <p class="text-sm font-semibold mt-1 text-primary">Rp65.000</p>
+                            <p class="text-xs text-gray-500 mt-1">
+                                <i class="fas fa-star text-yellow-400"></i> 4.8 | 1.1rb+ Terjual
+                            </p>
+                            <button
+                                class="add-to-cart-btn w-full mt-2 text-primary border border-primary py-2 px-4 rounded-full text-sm font-medium hover:bg-primary hover:text-secondary transition-colors duration-200"
+                                data-product-id="15">
+                                Tambah Keranjang
+                            </button>
+                        </div>
+                    </div>
+                    <!-- End of Product Card Loop -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Product Categories Page (hidden by default) -->
+        <section id="categories-page"
+            class="p-4 md:p-8 bg-secondary my-8 rounded-xl shadow-lg mx-4 md:mx-auto max-w-4xl hidden">
+            <div class="container mx-auto text-center">
+                <h2 class="text-xl md:text-2xl font-bold text-primary mb-6">Semua Kategori</h2>
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 gap-4 justify-items-center">
+                    <div class="text-center cursor-pointer" onclick="filterProducts('Home & Living')">
+                        <div class="icon-btn w-16 h-16 md:w-20 md:h-20 flex items-center justify-center mx-auto mb-2">
+                            <i class="fas fa-home text-2xl md:text-3xl"></i>
+                        </div>
+                        <p class="text-primary text-sm md:text-base font-medium">Home & Living</p>
+                    </div>
+                    <div class="text-center cursor-pointer" onclick="filterProducts('Health & Beauty')">
+                        <div class="icon-btn w-16 h-16 md:w-20 md:h-20 flex items-center justify-center mx-auto mb-2">
+                            <i class="fas fa-heartbeat text-2xl md:text-3xl"></i>
+                        </div>
+                        <p class="text-primary text-sm md:text-base font-medium">Health & Beauty</p>
+                    </div>
+                    <div class="text-center cursor-pointer" onclick="filterProducts('Semua')">
+                        <div class="icon-btn w-16 h-16 md:w-20 md:h-20 flex items-center justify-center mx-auto mb-2">
+                            <i class="fas fa-box text-2xl md:text-3xl"></i>
+                        </div>
+                        <p class="text-primary text-sm md:text-base font-medium">Semua</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Us Section (hidden by default) -->
+        <section id="about" class="p-4 md:p-8 bg-secondary my-8 rounded-xl shadow-lg mx-4 md:mx-auto max-w-4xl hidden">
+            <div class="container mx-auto">
+                <h2 class="text-xl md:text-2xl font-bold text-primary text-center mb-6">Tentang Kami</h2>
+                <div class="prose max-w-none text-center">
+                    <h3 class="text-lg md:text-xl font-semibold text-accent">Visi</h3>
+                    <p class="mt-2 text-gray-700">Menjadi brand produk ramah lingkungan terdepan yang menginspirasi gaya
+                        hidup berkelanjutan bagi setiap individu, menciptakan dampak positif bagi planet dan masyarakat.
+                    </p>
+
+                    <h3 class="text-lg md:text-xl font-semibold text-accent mt-6">Misi</h3>
+                    <ul class="list-none space-y-2 text-gray-700">
+                        <li>1. Menyediakan produk ramah lingkungan berkualitas tinggi yang mudah diakses dan terjangkau.
+                        </li>
+                        <li>2. Mengedukasi masyarakat tentang pentingnya gaya hidup berkelanjutan dan manfaatnya bagi
+                            lingkungan.</li>
+                        <li>3. Mengembangkan kemitraan dengan petani lokal dan pengrajin untuk mendukung ekonomi
+                            sirkular.</li>
+                        <li>4. Terus berinovasi dalam menciptakan produk yang ramah lingkungan dari hulu ke hilir.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact"
+            class="p-4 md:p-8 bg-secondary my-8 rounded-xl shadow-lg mx-4 md:mx-auto max-w-4xl hidden">
+            <div class="container mx-auto text-center">
+                <h2 class="text-xl md:text-2xl font-bold text-primary mb-6">Kontak Kami</h2>
+                <div class="flex flex-col md:flex-row justify-center items-center space-y-4 md:space-y-0 md:space-x-8">
+                    <div class="flex items-center space-x-2">
+                        <i class="fab fa-whatsapp text-2xl text-green-500"></i>
+                        <a href="https://wa.me/6285774046825" class="text-primary hover:text-accent font-medium"
+                            target="_blank" rel="noopener noreferrer">085774046825</a>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <i class="fab fa-instagram text-2xl text-pink-500"></i>
+                        <a href="https://www.instagram.com/clorea._" class="text-primary hover:text-accent font-medium"
+                            target="_blank" rel="noopener noreferrer">@clorea._</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- All Products Page (hidden by default) -->
+        <section id="all-products-page"
+            class="p-4 md:p-8 bg-secondary my-8 rounded-xl shadow-lg mx-4 md:mx-auto max-w-4xl hidden">
+            <div class="container mx-auto">
+                <h2 class="text-xl md:text-2xl font-bold text-primary mb-6 text-center">Semua Produk</h2>
+                <div id="all-product-list" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    <!-- All products will be rendered here dynamically -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Checkout Page (hidden by default) -->
+        <section id="checkout-page"
+            class="p-4 md:p-8 bg-secondary my-8 rounded-xl shadow-lg mx-4 md:mx-auto max-w-4xl hidden">
+            <div class="container mx-auto text-primary">
+                <h2 class="text-xl md:text-2xl font-bold text-primary mb-6 text-center">Checkout</h2>
+                <form id="checkout-form" class="space-y-6">
+                    <div>
+                        <label for="checkout-name" class="block font-medium mb-1">Nama Lengkap</label>
+                        <input type="text" id="checkout-name"
+                            class="w-full px-4 py-2 border rounded-full focus:outline-none focus:border-accent text-primary"
+                            placeholder="Masukkan nama Anda" required>
+                    </div>
+                    <div>
+                        <label for="checkout-address" class="block font-medium mb-1">Alamat Lengkap</label>
+                        <textarea id="checkout-address"
+                            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-accent text-primary"
+                            rows="4" placeholder="Masukkan alamat lengkap Anda" required></textarea>
+                    </div>
+                    <div>
+                        <label for="checkout-phone" class="block font-medium mb-1">Nomor Telepon</label>
+                        <input type="tel" id="checkout-phone"
+                            class="w-full px-4 py-2 border rounded-full focus:outline-none focus:border-accent text-primary"
+                            placeholder="Masukkan nomor telepon Anda" required>
+                    </div>
+
+                    <div class="pt-4 border-t border-gray-300">
+                        <h3 class="text-lg font-semibold mb-2">Metode Pembayaran</h3>
+                        <div class="space-y-2">
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="radio" name="payment-method" value="COD" class="form-radio text-accent"
+                                    checked>
+                                <span class="text-sm font-medium">COD (Bayar di Tempat)</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="radio" name="payment-method" value="VA" class="form-radio text-accent">
+                                <span class="text-sm font-medium">Virtual Account BCA</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-gray-300">
+                        <h3 class="text-lg font-semibold mb-2">Ringkasan Pesanan</h3>
+                        <div id="checkout-summary-items" class="space-y-2">
+                            <!-- Order items will be displayed here -->
+                        </div>
+                        <div class="flex justify-between font-semibold mt-4">
+                            <span>Total:</span>
+                            <span id="checkout-total">Rp0</span>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn w-full">Selesaikan Pesanan</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Order Tracking Page (hidden by default) -->
+        <section id="order-tracking-page"
+            class="p-4 md:p-8 bg-secondary my-8 rounded-xl shadow-lg mx-4 md:mx-auto max-w-4xl hidden">
+            <div class="container mx-auto text-center text-primary">
+                <h2 class="text-xl md:text-2xl font-bold text-primary mb-6">Lacak Pesanan Anda</h2>
+                <div id="order-tracking-container" class="space-y-4 text-left">
+                    <!-- Order tracking details will be rendered here -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-primary text-white p-6 md:p-8 mt-12">
+        <div class="container mx-auto text-center">
+            <div class="flex flex-col md:flex-row justify-center items-center md:space-x-8 space-y-4 md:space-y-0 mb-4">
+                <a href="#" class="hover:underline">Tentang Kami</a>
+                <a href="#" class="hover:underline">Kebijakan Privasi</a>
+                <a href="#" class="hover:underline">Syarat & Ketentuan</a>
+            </div>
+            <p class="text-sm">© 2024 Clorea. Hak Cipta Dilindungi.</p>
+        </div>
+    </footer>
+
+    <!-- Notification Snackbar -->
+    <div id="snackbar"></div>
+
+    <!-- VA Payment Modal -->
+    <div id="va-payment-modal" class="modal">
+        <div class="modal-content text-primary">
+            <button class="absolute top-2 right-4 text-gray-500 hover:text-gray-800 text-2xl"
+                onclick="toggleModal('va-payment-modal')">&times;</button>
+            <h2 class="text-xl font-semibold mb-4 text-primary text-center">Pembayaran Virtual Account</h2>
+            <div class="text-center space-y-4">
+                <p>Silakan lakukan pembayaran ke Virtual Account di bawah ini:</p>
+                <div class="p-4 bg-gray-100 rounded-lg">
+                    <p class="font-bold">Nomor Virtual Account BCA:</p>
+                    <div class="flex items-center justify-center space-x-2 mt-2">
+                        <span id="va-number" class="text-2xl font-semibold text-accent">785088231201</span>
+                        <button class="text-accent hover:text-primary" onclick="copyToClipboard('785088231201')">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+                <p class="text-sm text-gray-700">Pastikan total pembayaran sesuai dengan jumlah pesanan.</p>
+                <button class="btn w-full mt-4" onclick="closePaymentModalAndTrackOrder()">Selesai & Lacak
+                    Pesanan</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // Global utility function to toggle modals
+        function toggleModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal.style.display === "flex") {
+                modal.style.display = "none";
+            } else {
+                modal.style.display = "flex";
+            }
+        }
+
+        // State for wishlist and cart
+        let wishlist = [];
+        let cart = [];
+        let isUserLoggedIn = false; // Dummy state for user login
+        let lastOrder = null; // Store the last placed order
+        let loginSource = ''; // Track if login is from nav or checkout
+        let currentProductToAdd = null; // To store product details for the quantity modal
+
+        // Fungsi untuk menampilkan notifikasi snackbar
+        function showSnackbar(message, actionText, actionCallback) {
+            const snackbar = document.getElementById("snackbar");
+            snackbar.innerHTML = message;
+            if (actionText && actionCallback) {
+                const actionBtn = document.createElement('button');
+                actionBtn.textContent = actionText;
+                actionBtn.className = 'ml-4 font-bold underline text-white';
+                actionBtn.onclick = actionCallback;
+                snackbar.appendChild(actionBtn);
+            }
+            snackbar.classList.add("show");
+            setTimeout(function () {
+                snackbar.classList.remove("show");
+            }, 5000);
+        }
+
+        function copyToClipboard(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            showSnackbar("Nomor Virtual Account berhasil disalin!");
+        }
+
+        // Function to show About Us section
+        function showAboutUs() {
+            hideAllPages();
+            document.getElementById('about').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Function to show Contact section
+        function showContact() {
+            hideAllPages();
+            document.getElementById('contact').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Function to show Categories page
+        function showCategoriesPage() {
+            hideAllPages();
+            document.getElementById('categories-page').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Function to show all products page
+        function showAllProductsPage() {
+            hideAllPages();
+            document.getElementById('all-products-page').style.display = 'block';
+            renderAllProducts();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Function to show Home page
+        function showHome() {
+            hideAllPages();
+            document.getElementById('hero').style.display = 'block';
+            document.getElementById('categories').style.display = 'block';
+            document.getElementById('products').style.display = 'block';
+
+            // Reset search and filter to show all products
+            const productsHeading = document.getElementById('products-heading');
+            productsHeading.textContent = "Semua Produk";
+            const productCards = document.querySelectorAll('.product-card');
+            productCards.forEach(card => card.style.display = 'flex');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Function to show Checkout page
+        function showCheckoutPage() {
+            hideAllPages();
+            document.getElementById('checkout-page').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            renderCheckoutSummary();
+        }
+
+        // Function to show Order Tracking page
+        function showOrderTrackingPage() {
+            if (!lastOrder) {
+                showSnackbar("Anda belum memiliki pesanan yang perlu dilacak.");
+                showHome();
+                return;
+            }
+            hideAllPages();
+            document.getElementById('order-tracking-page').style.display = 'block';
+            renderOrderTracking();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function hideAllPages() {
+            const sections = ['hero', 'categories', 'products', 'about', 'contact', 'checkout-page', 'order-tracking-page', 'categories-page', 'all-products-page'];
+            sections.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) element.style.display = 'none';
+            });
+        }
+
+        // Function to update nav based on order status
+        function updateNav() {
+            const desktopTrackBtn = document.getElementById('desktop-track-order-btn');
+            const mobileTrackBtn = document.getElementById('mobile-track-order-btn');
+            if (lastOrder) {
+                desktopTrackBtn.classList.remove('hidden');
+                mobileTrackBtn.classList.remove('hidden');
+            } else {
+                desktopTrackBtn.classList.add('hidden');
+                mobileTrackBtn.classList.add('hidden');
+            }
+        }
+
+        function updateAuthUI() {
+            const desktopAuthBtn = document.getElementById('desktop-auth-btn');
+            const mobileAuthBtn = document.getElementById('mobile-auth-btn');
+            if (isUserLoggedIn) {
+                desktopAuthBtn.classList.add('hidden');
+                mobileAuthBtn.classList.add('hidden');
+            } else {
+                desktopAuthBtn.classList.remove('hidden');
+                mobileAuthBtn.classList.remove('hidden');
+            }
+        }
+
+        // Fungsi untuk menyaring produk berdasarkan kategori
+        function filterProducts(category) {
+            showHome(); // Kembali ke halaman utama untuk menampilkan produk
+            const productsHeading = document.getElementById('products-heading');
+            const productCards = document.querySelectorAll('.product-card');
+
+            if (category === 'Semua') {
+                productsHeading.textContent = "Semua Produk";
+                productCards.forEach(card => card.style.display = 'flex');
+            } else {
+                productsHeading.textContent = `Produk Kategori: ${category}`;
+                productCards.forEach(card => {
+                    const productCategory = card.dataset.productCategory;
+                    if (productCategory === category) {
+                        card.style.display = 'flex';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            }
+            window.scrollTo({ top: document.getElementById('products').offsetTop, behavior: 'smooth' });
+        }
+
+        // Fungsi untuk pencarian produk
+        function searchProducts() {
+            const searchQuery = document.getElementById('search-input').value.toLowerCase();
+            toggleModal('search-modal');
+            showHome();
+            const productsHeading = document.getElementById('products-heading');
+            const productCards = document.querySelectorAll('.product-card');
+
+            productsHeading.textContent = `Hasil Pencarian: "${searchQuery}"`;
+
+            let found = false;
+            productCards.forEach(card => {
+                const productName = card.dataset.productName.toLowerCase();
+                if (productName.includes(searchQuery)) {
+                    card.style.display = 'flex';
+                    found = true;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            if (!found) {
+                productsHeading.textContent = `Hasil Pencarian: "${searchQuery}" (Tidak Ditemukan)`;
+            }
+            window.scrollTo({ top: document.getElementById('products').offsetTop, behavior: 'smooth' });
+        }
+
+        // Render all products on the dedicated page
+        function renderAllProducts() {
+            const allProductsList = document.getElementById('all-product-list');
+            allProductsList.innerHTML = '';
+            const allProductCards = document.querySelectorAll('#products .product-card');
+            allProductCards.forEach(card => {
+                const clonedCard = card.cloneNode(true);
+                clonedCard.classList.remove('hidden');
+                allProductsList.appendChild(clonedCard);
+            });
+        }
+
+        // Fungsi untuk mengelola item di Wishlist dan Keranjang
+        function updateHeaderIcons() {
+            const headerWishlistIcon = document.getElementById('header-wishlist-icon').querySelector('i');
+            const cartCountElement = document.getElementById('cart-count');
+
+            if (wishlist.length > 0) {
+                headerWishlistIcon.classList.remove('far');
+                headerWishlistIcon.classList.add('fas');
+                headerWishlistIcon.style.color = '#ef4444';
+            } else {
+                headerWishlistIcon.classList.remove('fas');
+                headerWishlistIcon.classList.add('far');
+                headerWishlistIcon.style.color = '';
+            }
+
+            const totalCartItems = cart.reduce((total, item) => total + item.quantity, 0);
+
+            if (totalCartItems > 0) {
+                cartCountElement.textContent = totalCartItems;
+                cartCountElement.style.display = 'flex';
+            } else {
+                cartCountElement.style.display = 'none';
+            }
+        }
+
+        function renderWishlist() {
+            const wishlistItemsContainer = document.getElementById('wishlist-items');
+            wishlistItemsContainer.innerHTML = '';
+            if (wishlist.length === 0) {
+                wishlistItemsContainer.innerHTML = '<p class="empty-state text-gray-500">Wishlist Anda kosong.</p>';
+            } else {
+                wishlist.forEach(product => {
+                    const item = document.createElement('div');
+                    item.className = 'flex items-center space-x-4 border-b pb-2 border-gray-300';
+                    item.innerHTML = `
+                        <img src="${product.image}" alt="${product.name}" class="w-16 h-16 rounded-md object-cover">
+                        <div class="flex-grow">
+                            <p class="font-semibold text-primary">${product.name}</p>
+                            <p class="text-sm text-gray-700">Rp${product.price.toLocaleString('id-ID')}</p>
+                        </div>
+                        <button class="remove-from-wishlist text-red-500 hover:text-red-700" data-product-id="${product.id}">&times;</button>
+                    `;
+                    wishlistItemsContainer.appendChild(item);
+                });
+            }
+        }
+
+        function renderCart() {
+            const cartItemsContainer = document.getElementById('cart-items');
+            const cartTotalElement = document.getElementById('cart-total');
+            cartItemsContainer.innerHTML = '';
+            let total = 0;
+
+            if (cart.length === 0) {
+                cartItemsContainer.innerHTML = '<p class="empty-state text-gray-500">Keranjang Anda kosong.</p>';
+                cartTotalElement.textContent = 'Rp0';
+            } else {
+                cart.forEach(product => {
+                    let price = 0;
+                    if (typeof product.price === 'string' && product.price.includes('-')) {
+                        price = parseInt(product.price.split('-')[0].replace(/Rp|\./g, '').trim());
+                    } else {
+                        price = parseInt(product.price);
+                    }
+                    total += price * product.quantity;
+                    const item = document.createElement('div');
+                    item.className = 'flex items-center space-x-4 border-b pb-2 border-gray-300';
+                    item.innerHTML = `
+                        <img src="${product.image}" alt="${product.name}" class="w-16 h-16 rounded-md object-cover">
+                        <div class="flex-grow">
+                            <p class="font-semibold text-primary">${product.name}</p>
+                            <p class="text-sm text-gray-700">Rp${(price * product.quantity).toLocaleString('id-ID')} (${product.quantity}x)</p>
+                        </div>
+                        <button class="remove-from-cart text-red-500 hover:text-red-700" data-product-id="${product.id}">&times;</button>
+                    `;
+                    cartItemsContainer.appendChild(item);
+                });
+                cartTotalElement.textContent = `Rp${total.toLocaleString('id-ID')}`;
+            }
+        }
+
+        function renderCheckoutSummary() {
+            const checkoutItemsContainer = document.getElementById('checkout-summary-items');
+            const checkoutTotalElement = document.getElementById('checkout-total');
+            checkoutItemsContainer.innerHTML = '';
+            let total = 0;
+
+            if (cart.length > 0) {
+                cart.forEach(product => {
+                    let price = 0;
+                    if (typeof product.price === 'string' && product.price.includes('-')) {
+                        price = parseInt(product.price.split('-')[0].replace(/Rp|\./g, '').trim());
+                    } else {
+                        price = parseInt(product.price);
+                    }
+                    total += price * product.quantity;
+                    const item = document.createElement('div');
+                    item.className = 'flex justify-between text-sm text-gray-700';
+                    item.innerHTML = `
+                        <span>${product.name} x ${product.quantity}</span>
+                        <span>Rp${(price * product.quantity).toLocaleString('id-ID')}</span>
+                    `;
+                    checkoutItemsContainer.appendChild(item);
+                });
+            }
+            checkoutTotalElement.textContent = `Rp${total.toLocaleString('id-ID')}`;
+        }
+
+
+        // Render the order tracking page with dummy data
+        function renderOrderTracking() {
+            const container = document.getElementById('order-tracking-container');
+            container.innerHTML = '';
+
+            if (!lastOrder) {
+                container.innerHTML = `<p class="empty-state text-gray-500">Anda belum memiliki pesanan yang perlu dilacak.</p>`;
+                return;
+            }
+
+            const order = lastOrder;
+            const orderStatus = order.status;
+            const statuses = ["Dipesan", "Dikemas", "Dikirim", "Diterima"];
+
+            const orderDetails = document.createElement('div');
+            orderDetails.className = 'bg-white p-6 rounded-lg shadow-inner text-primary';
+            orderDetails.innerHTML = `
+                <h3 class="font-bold text-lg mb-2">Nomor Pesanan: ${order.id}</h3>
+                <p class="text-sm text-gray-700 mb-4">Total: Rp${order.total.toLocaleString('id-ID')}</p>
+                <div class="relative pt-1">
+                    <div class="flex mb-2 items-center justify-between">
+                        ${statuses.map((status, index) => {
+                const isCurrent = status === orderStatus;
+                const isCompleted = statuses.indexOf(orderStatus) >= index;
+                const colorClass = isCompleted ? 'text-accent' : 'text-gray-400';
+                const fontClass = isCurrent ? 'font-bold' : '';
+                return `<div class="flex-1 text-xs text-center ${colorClass} ${fontClass}">${status}</div>`;
+            }).join('')}
+                    </div>
+                    <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-gray-200">
+                        ${statuses.map((status, index) => {
+                const isCompleted = statuses.indexOf(orderStatus) >= index;
+                const width = (100 / (statuses.length - 1)) * index;
+                const bgClass = isCompleted ? 'bg-accent' : 'bg-gray-400';
+                if (index === 0) return '';
+                return `<div style="width: calc(${width}%);" class="${bgClass} shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center transition-all duration-500"></div>`;
+            }).join('')}
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <h4 class="font-semibold text-sm">Detail Pesanan:</h4>
+                    <ul class="list-disc list-inside space-y-1 text-sm text-gray-700 mt-2">
+                        ${order.items.map(item => `<li>${item.name} (${item.quantity}) - Rp${(item.price * item.quantity).toLocaleString('id-ID')}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+            container.appendChild(orderDetails);
+        }
+
+        function closePaymentModalAndTrackOrder() {
+            toggleModal('va-payment-modal');
+            showOrderTrackingPage();
+        }
+
+        // Handle login modal based on source
+        function showAuthModal(source) {
+            loginSource = source;
+            const authSubmitBtn = document.getElementById('auth-submit-btn');
+            authSubmitBtn.textContent = 'Masuk';
+
+            if (loginSource === 'checkout') {
+                authSubmitBtn.textContent = 'Lanjutkan ke Checkout';
+            }
+            toggleModal('auth-modal');
+        }
+
+        // Handle Checkout process
+        document.getElementById('checkout-btn').addEventListener('click', function () {
+            if (cart.length === 0) {
+                showSnackbar("Keranjang Anda kosong. Silakan tambahkan produk.");
+                return;
+            }
+            toggleModal('cart-modal'); // Close cart modal
+            if (isUserLoggedIn) {
+                // If user is logged in, go directly to checkout page
+                showCheckoutPage();
+            } else {
+                // If not logged in, show login/guest checkout modal
+                toggleModal('checkout-modal-guest-login');
+            }
+        });
+
+        // Handle Login/Register from checkout modal
+        document.getElementById('go-to-auth-btn').addEventListener('click', function () {
+            toggleModal('checkout-modal-guest-login');
+            showAuthModal('checkout');
+        });
+
+        // Handle Guest Checkout
+        document.getElementById('go-to-guest-checkout-btn').addEventListener('click', function () {
+            toggleModal('checkout-modal-guest-login');
+            showCheckoutPage();
+        });
+
+        // Handle dummy login submission
+        document.getElementById('auth-form').addEventListener('submit', function (event) {
+            event.preventDefault();
+            // Simulating successful login
+            isUserLoggedIn = true;
+            toggleModal('auth-modal');
+            showSnackbar("Berhasil masuk! Selamat datang kembali.");
+            updateAuthUI();
+
+            if (loginSource === 'checkout') {
+                showCheckoutPage();
+            } else {
+                showHome();
+            }
+        });
+
+        // Handle checkout form submission
+        document.getElementById('checkout-form').addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const selectedPaymentMethod = document.querySelector('input[name="payment-method"]:checked').value;
+
+            // Simulate creating an order
+            const orderId = 'ORD-' + Date.now().toString().slice(-6);
+            const total = cart.reduce((sum, item) => {
+                let price = 0;
+                if (typeof item.price === 'string' && item.price.includes('-')) {
+                    price = parseInt(item.price.split('-')[0].replace(/Rp|\./g, '').trim());
+                } else {
+                    price = parseInt(item.price);
+                }
+                return sum + (price * item.quantity);
+            }, 0);
+
+            // Store dummy order data
+            lastOrder = {
+                id: orderId,
+                total: total,
+                items: cart,
+                status: "Dipesan", // Initial status
+                paymentMethod: selectedPaymentMethod
+            };
+
+            if (selectedPaymentMethod === 'VA') {
+                toggleModal('va-payment-modal');
+            } else {
+                // For COD, directly show tracking
+                showSnackbar("Pesanan Anda telah berhasil dibuat!", "Lihat Pesanan", showOrderTrackingPage);
+                // Clear cart after successful checkout
+                cart = [];
+                updateHeaderIcons();
+                updateNav();
+                showOrderTrackingPage();
+            }
+
+
+        });
+
+        // Use window.onload to ensure all elements are ready before adding event listeners
+        window.onload = function () {
+            // Event delegation for product card actions
+            document.getElementById('main-content').addEventListener('click', function (event) {
+                const wishlistBtn = event.target.closest('.wishlist-btn');
+                const addToCartBtn = event.target.closest('.add-to-cart-btn');
+                const productCard = event.target.closest('.product-card');
+
+                if (wishlistBtn) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const card = wishlistBtn.closest('.product-card');
+                    const product = {
+                        id: card.dataset.productId,
+                        name: card.dataset.productName,
+                        price: card.dataset.productPrice,
+                        image: card.dataset.productImage
+                    };
+                    const icon = wishlistBtn.querySelector('i');
+                    const existingProductIndex = wishlist.findIndex(p => p.id === product.id);
+                    if (existingProductIndex === -1) {
+                        wishlist.push(product);
+                        icon.classList.remove('far');
+                        icon.classList.add('fas');
+                        icon.style.color = '#ef4444';
+                        showSnackbar("Produk ditambahkan ke wishlist!");
+                    } else {
+                        wishlist.splice(existingProductIndex, 1);
+                        icon.classList.remove('fas');
+                        icon.classList.add('far');
+                        icon.style.color = '';
+                        showSnackbar("Produk dihapus dari wishlist!");
+                    }
+                    updateHeaderIcons();
+                } else if (addToCartBtn) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const card = addToCartBtn.closest('.product-card');
+                    currentProductToAdd = {
+                        id: card.dataset.productId,
+                        name: card.dataset.productName,
+                        price: card.dataset.productPrice,
+                        image: card.dataset.productImage
+                    };
+
+                    if (currentProductToAdd.id === '1') { // Loofah product
+                        document.getElementById('product-options').classList.remove('hidden');
+                        document.getElementById('modal-product-quantity').value = 1;
+                        // Reset radio buttons
+                        const radios = document.getElementsByName('loofah-size');
+                        for (let i = 0; i < radios.length; i++) {
+                            radios[i].checked = false;
+                        }
+                    } else {
+                        document.getElementById('product-options').classList.add('hidden');
+                        document.getElementById('modal-product-quantity').value = 1;
+                    }
+                    toggleModal('add-to-cart-modal');
+
+                } else if (productCard) {
+                    event.preventDefault();
+                    const product = {
+                        id: productCard.dataset.productId,
+                        name: productCard.dataset.productName,
+                        price: productCard.dataset.productPriceRange || productCard.dataset.productPrice,
+                        image: productCard.dataset.productImage,
+                        description: productCard.dataset.productDescription,
+                        images: productCard.dataset.productImages ? productCard.dataset.productImages.split('|') : [productCard.dataset.productImage]
+                    };
+
+                    const mainImage = document.getElementById('detail-image');
+                    const gallery = document.getElementById('image-gallery-thumbnails');
+
+                    // Display main image, use product.image as default if images array is not available
+                    mainImage.src = product.image;
+                    mainImage.alt = product.name;
+
+                    // Display gallery thumbnails
+                    gallery.innerHTML = '';
+                    if (product.images.length > 1) {
+                        product.images.forEach(imgSrc => {
+                            const thumbnail = document.createElement('img');
+                            thumbnail.src = imgSrc;
+                            thumbnail.className = 'w-16 h-16 rounded-md cursor-pointer border-2 border-transparent hover:border-accent object-cover';
+                            thumbnail.addEventListener('click', () => {
+                                mainImage.src = imgSrc;
+                            });
+                            gallery.appendChild(thumbnail);
+                        });
+                    }
+
+                    document.getElementById('detail-name').textContent = product.name;
+                    document.getElementById('detail-price').textContent = product.price.startsWith('Rp') ? product.price : `Rp${parseInt(product.price).toLocaleString('id-ID')}`;
+
+                    const detailDescElement = document.getElementById('detail-description');
+                    detailDescElement.innerHTML = product.description;
+                    document.getElementById('product-quantity').value = 1;
+
+                    const detailAddBtn = document.getElementById('detail-add-to-cart-btn');
+                    detailAddBtn.onclick = function () {
+                        const quantity = parseInt(document.getElementById('product-quantity').value);
+                        const productToAdd = { ...product, quantity: quantity };
+
+                        const existingCartItem = cart.find(item => item.id === productToAdd.id);
+                        if (existingCartItem) {
+                            existingCartItem.quantity += quantity;
+                        } else {
+                            cart.push(productToAdd);
+                        }
+
+                        showSnackbar(`${quantity}x ${productToAdd.name} ditambahkan ke keranjang!`);
+                        updateHeaderIcons();
+                        toggleModal('product-detail-modal');
+                    };
+                    toggleModal('product-detail-modal');
+                }
+            });
+
+            // Event listener for confirming quantity in the new modal
+            document.getElementById('modal-confirm-add-to-cart-btn').addEventListener('click', function () {
+                const quantity = parseInt(document.getElementById('modal-product-quantity').value);
+                if (currentProductToAdd) {
+                    const productToAdd = { ...currentProductToAdd, quantity: quantity };
+
+                    // Check if it's the Loofah product with options
+                    if (currentProductToAdd.id === '1') {
+                        const selectedSize = document.querySelector('input[name="loofah-size"]:checked');
+                        if (!selectedSize) {
+                            showSnackbar("Pilih ukuran loofah terlebih dahulu.");
+                            return;
+                        }
+                        productToAdd.price = selectedSize.value;
+                        productToAdd.name = selectedSize.dataset.name;
+                    }
+
+                    const existingCartItem = cart.find(item => item.id === productToAdd.id && item.name === productToAdd.name);
+                    if (existingCartItem) {
+                        existingCartItem.quantity += quantity;
+                    } else {
+                        cart.push(productToAdd);
+                    }
+                    showSnackbar(`${quantity}x ${productToAdd.name} ditambahkan ke keranjang!`);
+                    updateHeaderIcons();
+                    currentProductToAdd = null; // Clear the temporary product
+                    toggleModal('add-to-cart-modal');
+                }
+            });
+
+            // Event delegation for wishlist and cart removal
+            document.getElementById('wishlist-modal').addEventListener('click', function (event) {
+                const removeBtn = event.target.closest('.remove-from-wishlist');
+                if (removeBtn) {
+                    const productId = removeBtn.dataset.productId;
+                    wishlist = wishlist.filter(p => p.id != productId);
+                    showSnackbar("Produk dihapus dari wishlist!");
+                    renderWishlist();
+                    updateHeaderIcons();
+                }
+            });
+
+            document.getElementById('cart-modal').addEventListener('click', function (event) {
+                const removeBtn = event.target.closest('.remove-from-cart');
+                if (removeBtn) {
+                    const productId = removeBtn.dataset.productId;
+                    cart = cart.filter(p => p.id != productId);
+                    showSnackbar("Produk dihapus dari keranjang!");
+                    renderCart();
+                    updateHeaderIcons();
+                }
+            });
+
+            document.getElementById('search-btn').addEventListener('click', function () {
+                toggleModal('search-modal');
+            });
+
+            document.getElementById('search-input').addEventListener('keyup', function (event) {
+                if (event.key === "Enter") {
+                    searchProducts();
+                }
+            });
+
+            document.getElementById('menu-btn').addEventListener('click', function () {
+                const menuModal = document.getElementById('menu-modal');
+                menuModal.style.display = "flex";
+                setTimeout(() => {
+                    menuModal.querySelector('.menu-modal-content').classList.add('show');
+                }, 10);
+            });
+            document.getElementById('menu-modal').addEventListener('click', function (event) {
+                if (event.target === this) {
+                    const menuModalContent = this.querySelector('.menu-modal-content');
+                    menuModalContent.classList.remove('show');
+                    setTimeout(() => {
+                        this.style.display = 'none';
+                    }, 300);
+                }
+            });
+            // Event listener untuk tombol wishlist di header
+            document.getElementById('header-wishlist-icon').addEventListener('click', function () {
+                renderWishlist();
+                toggleModal('wishlist-modal');
+            });
+            // Event listener untuk tombol keranjang di header
+            document.getElementById('header-cart-icon').addEventListener('click', function () {
+                renderCart();
+                toggleModal('cart-modal');
+            });
+
+            // Close modal when clicking outside the content
+            window.onclick = function (event) {
+                const modals = document.querySelectorAll('.modal');
+                modals.forEach(modal => {
+                    if (event.target === modal) {
+                        if (modal.id === 'menu-modal') {
+                            modal.querySelector('.menu-modal-content').classList.remove('show');
+                            setTimeout(() => {
+                                modal.style.display = 'none';
+                            }, 300);
+                        } else {
+                            modal.style.display = "none";
+                        }
+                    }
+                });
+            }
+
+            // Quantity selector logic for product detail modal
+            document.getElementById('decrement-quantity').addEventListener('click', function () {
+                const quantityInput = document.getElementById('product-quantity');
+                let currentValue = parseInt(quantityInput.value);
+                if (currentValue > 1) {
+                    quantityInput.value = currentValue - 1;
+                }
+            });
+
+            document.getElementById('increment-quantity').addEventListener('click', function () {
+                const quantityInput = document.getElementById('product-quantity');
+                let currentValue = parseInt(quantityInput.value);
+                quantityInput.value = currentValue + 1;
+            });
+
+            // Quantity selector logic for add to cart modal
+            document.getElementById('modal-decrement-quantity').addEventListener('click', function () {
+                const quantityInput = document.getElementById('modal-product-quantity');
+                let currentValue = parseInt(quantityInput.value);
+                if (currentValue > 1) {
+                    quantityInput.value = currentValue - 1;
+                }
+            });
+
+            document.getElementById('modal-increment-quantity').addEventListener('click', function () {
+                const quantityInput = document.getElementById('modal-product-quantity');
+                let currentValue = parseInt(quantityInput.value);
+                quantityInput.value = currentValue + 1;
+            });
+
+
+            updateHeaderIcons();
+            updateNav();
+            updateAuthUI();
+            showHome();
+        };
+
+    </script>
+</body>
+
+</html>
